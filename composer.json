@@ -1,0 +1,8 @@
+{
+    "require": {
+        "rjkip/ftp-php": "^1.1",
+        "wp-sync-db/wp-sync-db-media-files": "^1.1",
+        "league/flysystem": "^1.0",
+        "yajra/laravel-oci8": "^2.4"
+    }
+}
