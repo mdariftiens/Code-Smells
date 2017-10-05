@@ -46,7 +46,7 @@ class Customer extends Person
 {
  public function getAge()
  {
-   return date('Y') - date('Y', $this->getBirthday());
+   return date('Y') - date('Y', strtotime("2010-12-17"));
  }
  
 }
@@ -55,7 +55,7 @@ class Vendor extends Person
 
  public function getAge()
  {
-   return date('Y') - date('Y', $this->getBirthday());
+   return date('Y') - date('Y', strtotime("2010-12-17"));
  }
 }
 ```
@@ -65,7 +65,7 @@ class Person
 { 
  public function getAge()
  {
-   return date('Y') - date('Y', $this->getBirthday());
+   return date('Y') - date('Y', strtotime("2000-11-25"));
  }
 } 
 ```
