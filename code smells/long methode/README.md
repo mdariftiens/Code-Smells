@@ -1,71 +1,90 @@
-# Duplicate Code
 
-
-## Signs and Symptoms:
-Two code fragments look almost identical.
-
-## Reasons for the Problem:
-
-* Multiple programmers are working on different parts of the same program 
-* Subtle duplication- when specific parts of code look different but actually perform the same job. This kind of duplication can be hard to find and fix.
-* Purposefulduplication- When rushing to meet deadlines and the existing code is "almost right" for the job, novice programmers may not be able to resist the temptation of copying and pasting the relevant code. And in some cases, the programmer is simply too lazy.
-
-## Case and Solution
-
-To refactor our code we can use various strategies. For example, 
-1. when we have two equal code blocks within the **same class**, we can simply ***extract the method and invoke the call in both places***. This strategy called **Extract Method**
-2. If instead we have two identical methods in **different classes that extend the same class**, we can ***move the method in the parent class and delete it from the other two subclasses***. 
-3. If the code is similar but not exactly the same, we must first extract the method with the equal parts and then move it to the parent class. 
-4. If we have two methods that do the same thing but with **two different algorithms**, we can choose which ***algorithm is the best and use only it and substitute the algorithm***. This strategy called   **Substitute Algorithm**.
-5. If you have duplicate code in classes that are not related, we can think of creating a parent class and move the method, or if the objects cannot be children of the same class, we may decide to keep the method in a single class and invoke it from a related class, or to create a third class and invoke the method of this third class in the other two. 
-6. If a large number of conditional expressions are present and perform the same code (differing only in their conditions), merge these operators into a single condition using **Consolidate Conditional Expression** and use **Extract Method** to place the condition in a separate method with an easy-to-understand name.
-7. If the same code is performed in all branches of a conditional expression: place the identical code outside of the condition tree by using **Consolidate Duplicate Conditional Fragments**.
-
-###### The strategies can be varied�it�s up to us to understand what is best and choose it
-#
-#
-#### Example ( 2nd stratigy: different classes that extend the same class )
+Long Method: 
 ---
-#
-#
+
+**Signs and Symptoms:**
+Generally, any method longer than **ten lines** should make you start asking questions.
+
+**Reasons for the Problem:**
+Since it is easier to write code than to read it, this "smell" remains unnoticed until the method turns into an ugly, oversized beast.
+
+Mentally, it is often harder to create a new method than to add to an existing one: "But it's just two lines, there's no use in creating a whole method just for that..." Which means that another line is added and then yet another, giving birth to a tangle of spaghetti code.
+
+In the following example we have the Order class with a method that is too long.
 ```php
-class Person
-{ 
-
-} 
-
-class Customer extends Person
+class Order
 {
-    public function getAge()
+    ...
+    public function calculate()
     {
-        return date('Y') - date('Y', strtotime("2010-12-17"));
+    $details = $this->getOrderDetails();
+    
+    foreach($details as $detail)
+    {
+        if (!$detail->hasVat())
+        {
+            $vat = $this->getCustomer()->getVat();
+        }
+        else
+        {
+            $vat = $detail->getVat();
+        }
+        $price = $detail->getAmount() * $detail->getPrice();
+        $total += $price + ($price/100 * $vat->getValue());
     }
- 
-}
-class Vendor extends Person
-{
-    public function getAge()
+    
+    if ($this->hasDiscount())
     {
-        return date('Y') - date('Y', strtotime("2010-12-17"));
+        $total = $total – ($total/100 * $this->getDiscount());
+    }
+    elseif($this->getCustomer()->hasDiscountForMaxAmount()
+    && $total >= $this->getCustomer()->getMaxAmountForDiscount())
+    {
+        $total = $total – ($total/100 *  $this->getCustomer()->getDiscountForMaxAmount())
+    }
+    return $total;
     }
 }
 ```
-To delete this duplication we can move the getAge() method in the parent class.
+First, we can simplify this method extracting two methods—one to calculate detail total price and
+another to calculate the right order discount.
 ```php
-class Person
-{ 
-    public function getAge()
+class Order
+{
+    private function calculateDetailsPrice()
     {
-        return date('Y') - date('Y', strtotime("2000-11-25"));
+    foreach($this->getOrderDetails() as $detail)
+    {
+        if (!$detail->hasVat())
+        {
+            $vat = $this->getCustomer()->getVat();
+        }
+        else
+        {
+            $vat = $detail->getVat();
+        }
+        $price = $detail->getAmount() * $detail->getPrice();
+        $total += $price + ($price/100 * $vat->getValue());
+    }
+    return $total;
+ }
+
+ private function applyDiscount($total)
+ {
+    if ($this->hasDiscount())
+    {
+        $total = $total – ($total/100 * $this->getDiscount());
+    }
+    elseif($this->getCustomer()->hasDiscountForMaxAmount() &&
+    $total >= $this->getCustomer()->getMaxAmountForDiscount())
+    {
+        $total = $total – ($total/100 * $this->getCustomer()->getDiscountForMaxAmount())
+    }
+    return $total;
+ }
+    public function calculate()
+    {
+        return $this->applyDiscount($this->calculateDetailsPrice());
     }
 } 
-
-class Customer extends Person
-{
-
-}
-class Vendor extends Person
-{
-
-}
 ```
